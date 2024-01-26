@@ -18,6 +18,14 @@ namespace FilePrivate.Controllers
             return View();
         }
 
+
+        [HttpPost]
+
+        public IActionResult UploadFile(UploadFileDto dto)
+        {
+            return Ok(dto);
+        }
+
         public IActionResult Privacy()
         {
             return View();
