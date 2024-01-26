@@ -1,7 +1,31 @@
+using FilePrivate.Data;
+using FilePrivate.Extensions;
+using Microsoft.EntityFrameworkCore;
+using System.Reflection;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+
+builder.Services.AddAutoMapper(typeof(Program).Assembly);
+
+var types = Assembly.GetExecutingAssembly().GetTypes();
+var serviceTypes = types
+            .Where(t => t.IsClass && !t.IsAbstract && t.Name.EndsWith("Service"));
+// Register each service type
+foreach (var serviceType in serviceTypes) {
+    var interfaceType = types.FirstOrDefault(t => t.IsInterface && t.Name == "I" + serviceType.Name);
+    // Register as a transient service
+    if (!interfaceType.IsNullOrEmpty()) {
+        builder.Services.AddTransient(interfaceType, serviceType);
+    }
+}
+
+
+builder.Services.AddDbContext<ApplicationDbContext>(
+    options => options.UseSqlServer(builder.Configuration.GetConnectionString("DbString"))
+    );
 
 var app = builder.Build();
 
