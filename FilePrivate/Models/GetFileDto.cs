@@ -5,11 +5,13 @@ namespace FilePrivate.Models
     public class GetFileDto
     {
         [Required]
-        public string clientid { get; set; }
-        public string Isin { get; set; }
-        public string lang { get; set; }
+        public string Clientid { get; set; }
         [Required]
-        public string type { get; set; }
+        public string ISIN { get; set; }
+        [Required]
+        public string Lang { get; set; }
+        [Required]
+        public string Type { get; set; }
         public bool? save { get; set; }
     }
 }
