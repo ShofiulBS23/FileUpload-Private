@@ -1,4 +1,6 @@
+using FilePrivate.Extensions;
 using FilePrivate.Models;
+using FilePrivate.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
 
@@ -7,10 +9,15 @@ namespace FilePrivate.Controllers
     public class HomeController : Controller
     {
         private readonly ILogger<HomeController> _logger;
+        private readonly IFileUploadService _fileUploadService;
 
-        public HomeController(ILogger<HomeController> logger)
+        public HomeController(
+            ILogger<HomeController> logger,
+            IFileUploadService fileUploadService
+            )
         {
             _logger = logger;
+            _fileUploadService = fileUploadService;
         }
 
         public IActionResult Index()
@@ -20,9 +27,16 @@ namespace FilePrivate.Controllers
 
 
         [HttpPost]
-        public IActionResult UploadFile(UploadFileDto dto)
+        public async Task<IActionResult> UploadFile(UploadFileDto dto)
         {
-            return Ok(dto);
+            if (ModelState.IsValid) {
+                var result = await _fileUploadService.UploadFileAsync(dto);
+                if (result.IsNullOrEmpty()) {
+                    return StatusCode(StatusCodes.Status422UnprocessableEntity,"File upload operation failed");
+                }
+                return Ok(dto);
+            }
+            return BadRequest();
         }
 
         public IActionResult Privacy()
