@@ -20,7 +20,6 @@ namespace FilePrivate.Controllers
 
 
         [HttpPost]
-
         public IActionResult UploadFile(UploadFileDto dto)
         {
             return Ok(dto);
