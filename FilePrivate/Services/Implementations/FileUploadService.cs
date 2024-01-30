@@ -29,44 +29,45 @@ namespace FilePrivate.Services.Implementations
         {
             try {
                 using (var context = _context) {
-                    var docType = await context.DocTypes.AsNoTracking().FirstOrDefaultAsync(x => x.DocType == dto.Type);
+                    var docType = await context.DocTypes.AsNoTracking().FirstOrDefaultAsync(x => x.DocType == dto.DocType);
 
                     if (docType.IsNullOrEmpty()) {
-                        return null;
+                        throw new Exception($"The document type[{dto.DocType}] is not supported!");
                     }
 
-                    string fileExtension = GetFileExtention(dto.File);
+                    //string fileExtension = GetFileExtention(dto.File);
 
-                    if (fileExtension.IsNullOrEmpty()) {
-                        return null;
-                    }
+
+                    //if (fileExtension.IsNullOrEmpty()) {
+                    //    return null;
+                    //}
 
                     //File name: ISIN+lang+docType
-                    string fileName = $"{dto.ISIN}_{dto.Lang}_{dto.Type}";
+                    string fileName = $"{dto.ISIN}_{dto.Language}_{dto.DocType}";
 
-                    string folderName = $"{_baseFolder}\\{dto.Clientid}_{dto.Type}";
+                    string folderName = $"{_baseFolder}\\{dto.ClientId}\\{dto.DocType}";
 
                     if (!Directory.Exists(folderName)) {
                         Directory.CreateDirectory(folderName);
                     }
 
-                    bool saved = await SaveFileFromBase64String(folderName, $"{fileName}.{fileExtension}", dto.File);
+                    dto.DocExt = dto.DocExt.ToLower();
+
+                    bool saved = await SaveFileFromBase64String(folderName, $"{fileName}.{dto.DocExt}", dto.File);
 
                     if (!saved) {
-                        return null;
+                        throw new Exception("The attempt to save the file in local storage was unsuccessful!");
                     }
 
                     var existingRecord = await context.Documents.AsNoTracking()
                                                                 .FirstOrDefaultAsync(
                                                                     x => x.DocName == fileName &&
-                                                                    x.ClientId.ToString() == dto.Clientid &&
-                                                                    x.DocExt == fileExtension
+                                                                    x.ClientId == dto.ClientId &&
+                                                                    x.DocExt == dto.DocExt
                                                                 );
 
                     if (existingRecord.IsNullOrEmpty()) {
                         var dbInstace = _mapper.Map<Document>(dto);
-                        dbInstace.DocDate = DateTime.Now;
-                        dbInstace.DocExt = fileExtension;
                         dbInstace.DocName = fileName;
 
 
@@ -75,11 +76,12 @@ namespace FilePrivate.Services.Implementations
                         return _mapper.Map<UploadFileDto>(dbInstace);
                     }
 
-                    return _mapper.Map<UploadFileDto>(existingRecord);
+                    var dto1 = _mapper.Map<UploadFileDto>(existingRecord);
+                    return dto1;
                 }
                
             }catch(Exception ex) {
-                return null;
+                throw ex;
             }
             
         }
@@ -91,10 +93,12 @@ namespace FilePrivate.Services.Implementations
                 string filePath = Path.Combine(targetFolder, fileName);
 
 
-                string[] parts = base64String.Split(',');
+                //string[] parts = base64String.Split(',');
 
-                // Convert base64 string to bytes
-                byte[] fileBytes = Convert.FromBase64String(parts[1]);
+                //// Convert base64 string to bytes
+                //byte[] fileBytes = Convert.FromBase64String(parts[1]);
+
+                byte[] fileBytes = Convert.FromBase64String(base64String);
 
                 // Write the bytes to the file
                 // FileMode.Create => create if not exist, otherwise replace
@@ -104,8 +108,7 @@ namespace FilePrivate.Services.Implementations
 
                 return true;
             } catch (Exception ex) {
-                Console.WriteLine($"An error occurred: {ex.Message}");
-                return false;
+                throw ex;
             }
         }
 

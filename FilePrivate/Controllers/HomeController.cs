@@ -1,4 +1,3 @@
-using FilePrivate.Extensions;
 using FilePrivate.Models;
 using FilePrivate.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
@@ -29,14 +28,16 @@ namespace FilePrivate.Controllers
         [HttpPost]
         public async Task<IActionResult> UploadFile(UploadFileDto dto)
         {
-            if (ModelState.IsValid) {
-                var result = await _fileUploadService.UploadFileAsync(dto);
-                if (result.IsNullOrEmpty()) {
-                    return StatusCode(StatusCodes.Status422UnprocessableEntity,"File upload operation failed");
+            try {
+                if (ModelState.IsValid) {
+                    var result = await _fileUploadService.UploadFileAsync(dto);
+                    //result.File = dto.File;
+                    return Ok(result);
                 }
-                return Ok(dto);
+                return BadRequest("Payload is not valid");
+            }catch(Exception ex) {
+                return BadRequest(ex.Message);
             }
-            return BadRequest();
         }
 
         public IActionResult Privacy()
