@@ -19,7 +19,8 @@ namespace FilePrivate.Models
         [Required]
         public DateTime DocDate { get; set; }
 
-        public string DocName { get; set; } = string.Empty;
+        [Required]
+        public string DocName { get; set; }
 
         [Required]
         public string DocExt { get; set; }

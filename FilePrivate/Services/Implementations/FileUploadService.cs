@@ -35,16 +35,6 @@ namespace FilePrivate.Services.Implementations
                         throw new Exception($"The document type[{dto.DocType}] is not supported!");
                     }
 
-                    //string fileExtension = GetFileExtention(dto.File);
-
-
-                    //if (fileExtension.IsNullOrEmpty()) {
-                    //    return null;
-                    //}
-
-                    //File name: ISIN+lang+docType
-                    string fileName = $"{dto.ISIN}_{dto.Language}_{dto.DocType}";
-
                     string folderName = $"{_baseFolder}\\{dto.ClientId}\\{dto.DocType}";
 
                     if (!Directory.Exists(folderName)) {
@@ -53,31 +43,37 @@ namespace FilePrivate.Services.Implementations
 
                     dto.DocExt = dto.DocExt.ToLower();
 
-                    bool saved = await SaveFileFromBase64String(folderName, $"{fileName}.{dto.DocExt}", dto.File);
+                    string fileName = $"{dto.ISIN}_{dto.Language}_{dto.DocType}.{dto.DocExt}";
+
+                    bool saved = await SaveFileFromBase64String(folderName, fileName, dto.File);
 
                     if (!saved) {
                         throw new Exception("The attempt to save the file in local storage was unsuccessful!");
                     }
 
-                    var existingRecord = await context.Documents.AsNoTracking()
-                                                                .FirstOrDefaultAsync(
-                                                                    x => x.DocName == fileName &&
+                    var existingRecord = await context.Documents.FirstOrDefaultAsync(
+                                                                    x => x.DocName == dto.DocName &&
                                                                     x.ClientId == dto.ClientId &&
-                                                                    x.DocExt == dto.DocExt
+                                                                    x.DocExt == dto.DocExt &&
+                                                                    x.ISIN == dto.ISIN &&
+                                                                    x.DocType == dto.DocType &&
+                                                                    x.Language == dto.Language
                                                                 );
 
                     if (existingRecord.IsNullOrEmpty()) {
                         var dbInstace = _mapper.Map<Document>(dto);
-                        dbInstace.DocName = fileName;
-
+                        dbInstace.DocDate = DateTime.Now;
 
                         var dbInstance = await context.Documents.AddAsync(dbInstace);
                         await context.SaveChangesAsync();
                         return _mapper.Map<UploadFileDto>(dbInstace);
+                    } else {
+                        existingRecord.DocDate = DateTime.Now;
+                        context.Documents.Update(existingRecord);
+                        await context.SaveChangesAsync();
                     }
 
-                    var dto1 = _mapper.Map<UploadFileDto>(existingRecord);
-                    return dto1;
+                    return _mapper.Map<UploadFileDto>(existingRecord);
                 }
                
             }catch(Exception ex) {
@@ -92,15 +88,8 @@ namespace FilePrivate.Services.Implementations
                 // Create the full file path
                 string filePath = Path.Combine(targetFolder, fileName);
 
-
-                //string[] parts = base64String.Split(',');
-
-                //// Convert base64 string to bytes
-                //byte[] fileBytes = Convert.FromBase64String(parts[1]);
-
                 byte[] fileBytes = Convert.FromBase64String(base64String);
 
-                // Write the bytes to the file
                 // FileMode.Create => create if not exist, otherwise replace
                 await using (FileStream fs = new FileStream(filePath, FileMode.Create, FileAccess.Write)) {
                     await fs.WriteAsync(fileBytes, 0, fileBytes.Length);
