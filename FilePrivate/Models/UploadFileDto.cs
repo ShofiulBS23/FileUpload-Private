@@ -14,7 +14,7 @@ namespace FilePrivate.Models
         public string Language { get; set; }
 
         [Required]
-        public string DocType { get; set; }
+        public string DocGroup { get; set; }
 
         [Required]
         public DateTime DocDate { get; set; }
