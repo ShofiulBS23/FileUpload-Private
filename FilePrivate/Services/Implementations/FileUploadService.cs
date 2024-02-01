@@ -29,13 +29,13 @@ namespace FilePrivate.Services.Implementations
         {
             try {
                 using (var context = _context) {
-                    var docType = await context.DocTypes.AsNoTracking().FirstOrDefaultAsync(x => x.DocType == dto.DocType);
+                    var docType = await context.DocGroups.AsNoTracking().FirstOrDefaultAsync(x => x.DocGroup == dto.DocGroup);
 
                     if (docType.IsNullOrEmpty()) {
-                        throw new Exception($"The document type[{dto.DocType}] is not supported!");
+                        throw new Exception($"The document type[{dto.DocGroup}] is not supported!");
                     }
 
-                    string folderName = $"{_baseFolder}\\{dto.ClientId}\\{dto.DocType}";
+                    string folderName = $"{_baseFolder}\\{dto.ClientId}\\{dto.DocGroup}\\{dto.DocDate.ToString("MM-dd-yyyyy")}";
 
                     if (!Directory.Exists(folderName)) {
                         Directory.CreateDirectory(folderName);
@@ -43,7 +43,8 @@ namespace FilePrivate.Services.Implementations
 
                     dto.DocExt = dto.DocExt.ToLower();
 
-                    string fileName = $"{dto.ISIN}_{dto.Language}_{dto.DocType}.{dto.DocExt}";
+                    //string fileName = $"{dto.ISIN}_{dto.Language}_{dto.DocType}.{dto.DocExt}";
+                    string fileName = $"{dto.DocName}.{dto.DocExt}";
 
                     bool saved = await SaveFileFromBase64String(folderName, fileName, dto.File);
 
@@ -56,21 +57,16 @@ namespace FilePrivate.Services.Implementations
                                                                     x.ClientId == dto.ClientId &&
                                                                     x.DocExt == dto.DocExt &&
                                                                     x.ISIN == dto.ISIN &&
-                                                                    x.DocType == dto.DocType &&
-                                                                    x.Language == dto.Language
+                                                                    x.DocGroup == dto.DocGroup &&
+                                                                    x.Language == dto.Language &&
+                                                                    x.DocDate == dto.DocDate 
                                                                 );
 
                     if (existingRecord.IsNullOrEmpty()) {
                         var dbInstace = _mapper.Map<Document>(dto);
-                        dbInstace.DocDate = DateTime.Now;
-
                         var dbInstance = await context.Documents.AddAsync(dbInstace);
                         await context.SaveChangesAsync();
                         return _mapper.Map<UploadFileDto>(dbInstace);
-                    } else {
-                        existingRecord.DocDate = DateTime.Now;
-                        context.Documents.Update(existingRecord);
-                        await context.SaveChangesAsync();
                     }
 
                     return _mapper.Map<UploadFileDto>(existingRecord);
