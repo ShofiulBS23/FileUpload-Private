@@ -45,7 +45,7 @@ namespace FilePrivate.Services.Implementations
                     dto.DocExt = dto.DocExt.ToLower();
 
                     //string fileName = $"{dto.ISIN}_{dto.Language}_{dto.DocType}.{dto.DocExt}";
-                    string fileName = $"{dto.DocName}.{dto.DocExt}";
+                    string fileName = $"{dto.DocName}_{dto.Language}.{dto.DocExt}";
 
                     bool saved = await SaveFileFromBase64String(folderName, fileName, dto.File);
 
