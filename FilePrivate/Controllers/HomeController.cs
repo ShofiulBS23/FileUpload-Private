@@ -26,7 +26,7 @@ namespace FilePrivate.Controllers
 
 
         [HttpPost]
-        public async Task<IActionResult> UploadFile(UploadFileDto dto)
+        public async Task<IActionResult> UploadFile([FromBody] UploadFileDto dto)
         {
             try {
                 if (ModelState.IsValid) {
