@@ -33,5 +33,7 @@ namespace FilePrivate.DbModels
         [StringLength(10)]
         public string DocExt { get; set; }
 
+        public DateTime UploadDate { get; set; }
+
     }
 }
