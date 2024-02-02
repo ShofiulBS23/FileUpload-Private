@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using FilePrivate.Constants;
 using FilePrivate.Data;
 using FilePrivate.DbModels;
 using FilePrivate.Extensions;
@@ -35,7 +36,7 @@ namespace FilePrivate.Services.Implementations
                         throw new Exception($"The document type[{dto.DocGroup}] is not supported!");
                     }
 
-                    string folderName = $"{_baseFolder}\\{dto.ClientId}\\{dto.DocGroup}\\{dto.DocDate.ToString("MM-dd-yyyyy")}";
+                    string folderName = $"{_baseFolder}\\{dto.ClientId}\\{dto.DocGroup}\\{dto.DocDate.ToString(DateTimeConstant.DateTimeFormat)}";
 
                     if (!Directory.Exists(folderName)) {
                         Directory.CreateDirectory(folderName);
@@ -64,9 +65,14 @@ namespace FilePrivate.Services.Implementations
 
                     if (existingRecord.IsNullOrEmpty()) {
                         var dbInstace = _mapper.Map<Document>(dto);
+                        dbInstace.UploadDate = DateTime.Now;
                         var dbInstance = await context.Documents.AddAsync(dbInstace);
                         await context.SaveChangesAsync();
                         return _mapper.Map<UploadFileDto>(dbInstace);
+                    } else {
+                        existingRecord.UploadDate = DateTime.Now;
+                        context.Documents.Update(existingRecord);
+                        await context.SaveChangesAsync();
                     }
 
                     return _mapper.Map<UploadFileDto>(existingRecord);
