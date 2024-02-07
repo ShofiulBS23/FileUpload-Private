@@ -54,13 +54,10 @@ namespace FilePrivate.Services.Implementations
                     }
 
                     var existingRecord = await context.Documents.FirstOrDefaultAsync(
-                                                                    x => x.DocName == dto.DocName &&
-                                                                    x.ClientId == dto.ClientId &&
-                                                                    x.DocExt == dto.DocExt &&
+                                                                    x => x.ClientId == dto.ClientId  &&
                                                                     x.ISIN == dto.ISIN &&
                                                                     x.DocGroup == dto.DocGroup &&
-                                                                    x.Language == dto.Language &&
-                                                                    x.DocDate == dto.DocDate 
+                                                                    x.Language == dto.Language
                                                                 );
 
                     if (existingRecord.IsNullOrEmpty()) {
@@ -70,6 +67,9 @@ namespace FilePrivate.Services.Implementations
                         await context.SaveChangesAsync();
                         return _mapper.Map<UploadFileDto>(dbInstace);
                     } else {
+                        existingRecord.DocDate = dto.DocDate;
+                        existingRecord.DocExt = dto.DocExt;
+                        existingRecord.DocName = dto.DocName;
                         existingRecord.UploadDate = DateTime.Now;
                         context.Documents.Update(existingRecord);
                         await context.SaveChangesAsync();
