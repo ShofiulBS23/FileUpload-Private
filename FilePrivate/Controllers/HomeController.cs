@@ -34,7 +34,11 @@ namespace FilePrivate.Controllers
                     //result.File = dto.File;
                     return Ok(result);
                 }
-                return BadRequest("Payload is not valid");
+                var invalidProperties = ModelState
+                                        .Where(x => x.Value.Errors.Any())
+                                        .Select(x => new { Property = x.Key, Errors = x.Value.Errors.Select(e => e.ErrorMessage) })
+                                        .ToList();
+                return BadRequest(invalidProperties);
             }catch(Exception ex) {
                 return BadRequest(ex.Message);
             }
